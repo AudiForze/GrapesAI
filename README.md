@@ -139,7 +139,7 @@ El flujo `My workflow 4.json` contiene la lógica principal de IA:
 
 ## 🧑‍💻 Autor
 
-**GrapesAI** ha sido creado con pasión y visión de futuro por **Geremy Gomrz**,  
+**GrapesAI** ha sido creado con pasión y visión de futuro por **Geremy Gomez**,  
 buscando unir la automatización inteligente con la comprensión profunda de datos.
 
 ---
