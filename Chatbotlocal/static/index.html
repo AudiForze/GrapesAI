@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Physclab Chatbot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .chat-container {
+            width: 400px;
+            height: 600px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .chat-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .chat-header p {
+            margin: 5px 0 0 0;
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .status-indicator {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            width: 12px;
+            height: 12px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            animation: messageSlide 0.3s ease-out;
+        }
+
+        @keyframes messageSlide {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            text-align: right;
+        }
+
+        .message.bot {
+            text-align: left;
+        }
+
+        .message-bubble {
+            display: inline-block;
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            word-wrap: break-word;
+            position: relative;
+            text-align: left;
+        }
+
+        .user .message-bubble {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .bot .message-bubble {
+            background: #f3f4f6;
+            color: #374151;
+            border-bottom-left-radius: 5px;
+            border: 1px solid #e5e7eb;
+        }
+
+        /* Estilos para Markdown */
+        .message-bubble h1,
+        .message-bubble h2,
+        .message-bubble h3,
+        .message-bubble h4,
+        .message-bubble h5,
+        .message-bubble h6 {
+            margin: 8px 0 4px 0;
+            font-weight: 600;
+        }
+
+        .message-bubble h1 { font-size: 1.4em; }
+        .message-bubble h2 { font-size: 1.3em; }
+        .message-bubble h3 { font-size: 1.2em; }
+        .message-bubble h4 { font-size: 1.1em; }
+        .message-bubble h5 { font-size: 1.05em; }
+        .message-bubble h6 { font-size: 1em; }
+
+        .message-bubble p {
+            margin: 4px 0;
+            line-height: 1.4;
+        }
+
+        .message-bubble ul,
+        .message-bubble ol {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+
+        .message-bubble li {
+            margin: 2px 0;
+            line-height: 1.4;
+        }
+
+        .message-bubble blockquote {
+            margin: 8px 0;
+            padding: 8px 12px;
+            border-left: 3px solid #4f46e5;
+            background: rgba(79, 70, 229, 0.1);
+            border-radius: 4px;
+        }
+
+        .message-bubble strong {
+            font-weight: 600;
+        }
+
+        .message-bubble em {
+            font-style: italic;
+        }
+
+        .message-bubble code {
+            background: rgba(0, 0, 0, 0.1);
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .user .message-bubble code {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .code-block {
+            margin: 8px 0;
+            position: relative;
+            background: #1e1e1e;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .code-header {
+            background: #2d2d2d;
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #404040;
+        }
+
+        .code-language {
+            color: #888;
+            font-size: 0.8em;
+            font-family: 'Courier New', monospace;
+        }
+
+        .copy-button {
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7em;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .copy-button:hover {
+            background: #3730a3;
+        }
+
+        .copy-button.copied {
+            background: #10b981;
+        }
+
+        .code-content {
+            padding: 12px;
+            color: #e5e5e5;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+
+        .timestamp {
+            font-size: 0.7rem;
+            opacity: 0.6;
+            margin-top: 5px;
+        }
+
+        .typing-indicator {
+            display: none;
+            text-align: left;
+            margin-bottom: 15px;
+        }
+
+        .typing-indicator .message-bubble {
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            padding: 16px;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #9ca3af;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .file-message {
+            margin-bottom: 15px;
+            padding: 12px;
+            background: #f8f9fa;
+            border: 1px solid #e5e7eb;
+            border-left: 4px solid #4f46e5;
+            border-radius: 8px;
+            animation: messageSlide 0.3s ease-out;
+        }
+
+        .file-message .file-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .file-message .file-icon {
+            font-size: 1.2rem;
+        }
+
+        .file-message .file-name {
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .file-message .file-size {
+            font-size: 0.8rem;
+            color: #6b7280;
+        }
+
+        .upload-progress {
+            height: 4px;
+            background: #e5e7eb;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .upload-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #4f46e5, #7c3aed);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .chat-input {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .file-upload-button {
+            width: 44px;
+            height: 44px;
+            background: #6b7280;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 18px;
+            position: relative;
+        }
+
+        .file-upload-button:hover {
+            background: #aeb3bb;
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(195, 197, 202, 0.4);
+        }
+
+        .file-upload-button:active {
+            transform: scale(0.95);
+        }
+
+        .file-upload-button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 20px;
+            outline: none;
+            font-size: 14px;
+            resize: none;
+            max-height: 100px;
+            min-height: 44px;
+            transition: all 0.3s ease;
+        }
+
+        .message-input:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .send-button {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 18px;
+        }
+
+        .send-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(79, 70, 229, 0.4);
+        }
+
+        .send-button:active {
+            transform: scale(0.95);
+        }
+
+        .send-button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .welcome-message {
+            text-align: center;
+            color: #6b7280;
+            font-style: italic;
+            margin: 20px 0;
+        }
+
+        .drag-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(79, 70, 229, 0.1);
+            border: 2px dashed #4f46e5;
+            border-radius: 20px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            color: #4f46e5;
+            font-weight: 600;
+            z-index: 1000;
+        }
+
+        .drag-overlay.active {
+            display: flex;
+        }
+
+        @media (max-width: 480px) {
+            .chat-container {
+                width: 100%;
+                height: 100vh;
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="status-indicator"></div>
+            <h2>Physclab Assistant</h2>
+            <p>Asistente de estudio y trabajo</p>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="welcome-message">
+                ¡Hola! Soy tu asistente virtual de Physclab. ¿En qué puedo ayudarte hoy?
+                <br><small>También puedes subir archivos para que los analice.</small>
+            </div>
+        </div>
+        
+        <div class="typing-indicator" id="typingIndicator">
+            <div class="message-bubble">
+                <div class="typing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chat-input">
+            <div class="input-group">
+                <button id="fileUploadButton" class="file-upload-button" title="Subir archivo">
+                    📎
+                </button>
+                <button id="imageUploadButton" class="file-upload-button" title="Subir imagen">
+                    🖼️
+                </button>
+                <textarea 
+                    id="messageInput" 
+                    class="message-input" 
+                    placeholder="Escribe tu mensaje..." 
+                    rows="1"
+                    maxlength="1000"
+                ></textarea>
+                <button id="sendButton" class="send-button" title="Enviar mensaje">
+                    ➤
+                </button>
+            </div>
+            <input type="file" id="fileInput" class="file-input" multiple 
+                   accept=".txt,.pdf,.png,.jpg,.jpeg,.gif,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.csv,.json,.xml,.zip">
+            <input type="file" id="imageInput" class="file-input" accept="image/png, image/jpeg, image/gif">
+        </div>
+        
+        <div class="drag-overlay" id="dragOverlay">
+            <div>
+                📎 Suelta los archivos aquí para subirlos
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class MarkdownParser {
+            constructor() {
+                this.codeBlockRegex = /```(\w+)?\n?([\s\S]*?)```/g;
+                this.inlineCodeRegex = /`([^`]+)`/g;
+                this.boldRegex = /\*\*(.*?)\*\*/g;
+                this.italicRegex = /\*(.*?)\*/g;
+                this.headingRegex = /^(#{1,6})\s+(.*$)/gm;
+                this.listRegex = /^[\s]*[-*+]\s+(.*$)/gm;
+                this.numberedListRegex = /^[\s]*\d+\.\s+(.*$)/gm;
+                this.blockquoteRegex = /^>\s+(.*$)/gm;
+                this.linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+            }
+
+            parse(text) {
+                let html = text;
+                
+                // Primero procesar bloques de código para evitar conflictos
+                const codeBlocks = [];
+                html = html.replace(this.codeBlockRegex, (match, language, code) => {
+                    const index = codeBlocks.length;
+                    codeBlocks.push({
+                        language: language || 'text',
+                        code: code.trim()
+                    });
+                    return `__CODE_BLOCK_${index}__`;
+                });
+
+                // Procesar elementos inline
+                html = html.replace(this.inlineCodeRegex, '<code>$1</code>');
+                html = html.replace(this.boldRegex, '<strong>$1</strong>');
+                html = html.replace(this.italicRegex, '<em>$1</em>');
+                html = html.replace(this.linkRegex, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+
+                // Procesar encabezados
+                html = html.replace(this.headingRegex, (match, hashes, content) => {
+                    const level = hashes.length;
+                    return `<h${level}>${content}</h${level}>`;
+                });
+
+                // Procesar listas
+                html = this.processLists(html);
+
+                // Procesar citas
+                html = html.replace(this.blockquoteRegex, '<blockquote>$1</blockquote>');
+
+                // Procesar saltos de línea
+                html = html.replace(/\n\n/g, '</p><p>');
+                html = html.replace(/\n/g, '<br>');
+
+                // Restaurar bloques de código
+                codeBlocks.forEach((block, index) => {
+                    const codeHtml = this.createCodeBlock(block.language, block.code);
+                    html = html.replace(`__CODE_BLOCK_${index}__`, codeHtml);
+                });
+
+                // Envolver en párrafos si no hay elementos de bloque
+                if (!html.includes('<h') && !html.includes('<div') && !html.includes('<blockquote')) {
+                    html = `<p>${html}</p>`;
+                }
+
+                return html;
+            }
+
+            processLists(html) {
+                // Procesar listas no numeradas
+                const lines = html.split('\n');
+                let result = [];
+                let inList = false;
+                let listType = null;
+
+                for (let line of lines) {
+                    const unorderedMatch = line.match(/^[\s]*[-*+]\s+(.*)/);
+                    const orderedMatch = line.match(/^[\s]*\d+\.\s+(.*)/);
+
+                    if (unorderedMatch) {
+                        if (!inList || listType !== 'ul') {
+                            if (inList) result.push(`</${listType}>`);
+                            result.push('<ul>');
+                            listType = 'ul';
+                            inList = true;
+                        }
+                        result.push(`<li>${unorderedMatch[1]}</li>`);
+                    } else if (orderedMatch) {
+                        if (!inList || listType !== 'ol') {
+                            if (inList) result.push(`</${listType}>`);
+                            result.push('<ol>');
+                            listType = 'ol';
+                            inList = true;
+                        }
+                        result.push(`<li>${orderedMatch[1]}</li>`);
+                    } else {
+                        if (inList) {
+                            result.push(`</${listType}>`);
+                            inList = false;
+                            listType = null;
+                        }
+                        result.push(line);
+                    }
+                }
+
+                if (inList) {
+                    result.push(`</${listType}>`);
+                }
+
+                return result.join('\n');
+            }
+
+            createCodeBlock(language, code) {
+                const escapedCode = this.escapeHtml(code);
+                return `
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-language">${language}</span>
+                            <button class="copy-button" onclick="copyCode(this)" data-code="${this.escapeAttribute(code)}">
+                                Copiar
+                            </button>
+                        </div>
+                        <div class="code-content">${escapedCode}</div>
+                    </div>
+                `;
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            escapeAttribute(text) {
+                return text.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+            }
+        }
+
+        // Función global para copiar código
+        function copyCode(button) {
+            const code = button.getAttribute('data-code');
+            navigator.clipboard.writeText(code).then(() => {
+                const originalText = button.textContent;
+                button.textContent = '¡Copiado!';
+                button.classList.add('copied');
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(() => {
+                // Fallback para navegadores más antiguos
+                const textarea = document.createElement('textarea');
+                textarea.value = code;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                
+                const originalText = button.textContent;
+                button.textContent = '¡Copiado!';
+                button.classList.add('copied');
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        class Chatbot {
+            constructor() {
+                this.messagesContainer = document.getElementById('chatMessages');
+                this.messageInput = document.getElementById('messageInput');
+                this.sendButton = document.getElementById('sendButton');
+                this.typingIndicator = document.getElementById('typingIndicator');
+                this.fileUploadButton = document.getElementById('fileUploadButton');
+                this.imageUploadButton = document.getElementById('imageUploadButton');
+                this.fileInput = document.getElementById('fileInput');
+                this.imageInput = document.getElementById('imageInput');
+                this.dragOverlay = document.getElementById('dragOverlay');
+                
+                this.sessionId = this.generateSessionId();
+                this.isTyping = false;
+                this.isUploading = false;
+                this.selectedFile = null;
+                this.markdownParser = new MarkdownParser();
+                
+                this.init();
+            }
+
+            init() {
+                // Event listeners básicos
+                this.sendButton.addEventListener('click', () => this.sendMessage());
+                this.messageInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
+
+                // File upload events
+                this.fileUploadButton.addEventListener('click', () => {
+                    this.fileInput.click();
+                });
+                
+                this.fileInput.addEventListener('change', (e) => {
+                    this.handleFileUpload(e.target.files);
+                });
+
+                // Image upload events
+                this.imageUploadButton.addEventListener('click', () => {
+                    this.imageInput.click();
+                });
+
+                this.imageInput.addEventListener('change', (e) => {
+                    this.handleImageSelection(e.target.files[0]);
+                });
+
+                // Drag and drop events
+                this.setupDragAndDrop();
+
+                // Auto-resize textarea
+                this.messageInput.addEventListener('input', () => {
+                    this.messageInput.style.height = 'auto';
+                    this.messageInput.style.height = Math.min(this.messageInput.scrollHeight, 100) + 'px';
+                });
+
+                // Focus on input
+                this.messageInput.focus();
+            }
+
+            setupDragAndDrop() {
+                const container = document.querySelector('.chat-container');
+
+                container.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    this.dragOverlay.classList.add('active');
+                });
+
+                container.addEventListener('dragleave', (e) => {
+                    if (!container.contains(e.relatedTarget)) {
+                        this.dragOverlay.classList.remove('active');
+                    }
+                });
+
+                container.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    this.dragOverlay.classList.remove('active');
+                    
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        this.handleFileUpload(files);
+                    }
+                });
+            }
+
+            generateSessionId() {
+                return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            }
+
+            handleImageSelection(file) {
+                if (!file) return;
+
+                // Almacena el archivo para enviarlo más tarde
+                this.selectedFile = file;
+                
+                // Muestra una burbuja en el chat indicando que la imagen está lista
+                this.addFileMessage(file);
+                this.addMessage('Imagen lista para enviar. Escribe un mensaje y presiona enviar.', 'bot');
+            }
+
+            async handleFileUpload(files) {
+                if (!files || files.length === 0 || this.isUploading) return;
+
+                this.isUploading = true;
+                this.fileUploadButton.style.opacity = '0.5';
+                this.fileUploadButton.disabled = true;
+
+                for (let file of files) {
+                    await this.uploadSingleFile(file);
+                }
+
+                this.isUploading = false;
+                this.fileUploadButton.style.opacity = '1';
+                this.fileUploadButton.disabled = false;
+                this.fileInput.value = '';
+            }
+
+            async uploadSingleFile(file) {
+                // Validar tamaño del archivo (16MB máximo)
+                const maxSize = 16 * 1024 * 1024; // 16MB
+                if (file.size > maxSize) {
+                    this.addMessage(`El archivo "${file.name}" es demasiado grande. Tamaño máximo: 16MB`, 'bot');
+                    return;
+                }
+
+                // Add file message to chat
+                const fileMessageDiv = this.addFileMessage(file);
+                
+                try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('sessionId', this.sessionId);
+
+                    // Show upload progress
+                    const progressBar = fileMessageDiv.querySelector('.upload-progress-bar');
+                    
+                    // Simular progreso inicial
+                    progressBar.style.width = '20%';
+
+                    const response = await fetch('/api/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    // Simular progreso durante la subida
+                    progressBar.style.width = '80%';
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    
+                    // Completar progreso
+                    progressBar.style.width = '100%';
+                    
+                    // Add success message después de un breve delay
+                    setTimeout(() => {
+                        this.addMessage(data.message, 'bot');
+                        fileMessageDiv.style.border = '1px solid #10b981';
+                        fileMessageDiv.style.borderLeft = '4px solid #10b981';
+                        fileMessageDiv.style.background = '#f0fdf4';
+
+                        const uploadProgress = fileMessageDiv.querySelector('.upload-progress');
+                        if (uploadProgress) {
+                            uploadProgress.style.display = 'none';
+                        }
+                    }, 500);
+                    
+                } catch (error) {
+                    console.error('Error uploading file:', error);
+                    
+                    fileMessageDiv.style.border = '1px solid #ef4444';
+                    fileMessageDiv.style.borderLeft = '4px solid #ef4444';
+                    fileMessageDiv.style.background = '#fef2f2';
+         
+                    const uploadProgress = fileMessageDiv.querySelector('.upload-progress');
+                    if (uploadProgress) {
+                        uploadProgress.style.display = 'none';
+                    }
+                    
+                    this.addMessage(`Error al subir el archivo "${file.name}": ${error.message}`, 'bot');
+                }
+            }
+
+            addFileMessage(file) {
+                const fileMessageDiv = document.createElement('div');
+                fileMessageDiv.className = 'file-message';
+                
+                const fileIcon = this.getFileIcon(file.type, file.name);
+                const fileSize = this.formatFileSize(file.size);
+                
+                fileMessageDiv.innerHTML = `
+                    <div class="file-info">
+                        <span class="file-icon">${fileIcon}</span>
+                        <span class="file-name">${file.name}</span>
+                        <span class="file-size">(${fileSize})</span>
+                    </div>
+                    <div class="upload-progress">
+                        <div class="upload-progress-bar" style="width: 0%"></div>
+                    </div>
+                `;
+                
+                this.messagesContainer.appendChild(fileMessageDiv);
+                this.scrollToBottom();
+                
+                return fileMessageDiv;
+            }
+
+            getFileIcon(fileType, fileName) {
+                const extension = fileName.split('.').pop().toLowerCase();
+                
+                if (fileType.startsWith('image/')) return '🖼️';
+                if (fileType.includes('pdf')) return '📄';
+                if (fileType.includes('word') || fileType.includes('document')) return '📝';
+                if (fileType.includes('text')) return '📄';
+                if (fileType.includes('excel') || fileType.includes('spreadsheet')) return '📊';
+                if (fileType.includes('powerpoint') || fileType.includes('presentation')) return '📊';
+                if (fileType.includes('zip') || fileType.includes('compressed')) return '🗜️';
+                
+                // Por extensión
+                switch (extension) {
+                    case 'pdf': return '📄';
+                    case 'doc':
+                    case 'docx': return '📝';
+                    case 'xls':
+                    case 'xlsx': return '📊';
+                    case 'ppt':
+                    case 'pptx': return '📊';
+                    case 'txt': return '📄';
+                    case 'csv': return '📊';
+                    case 'json': return '📄';
+                    case 'xml': return '📄';
+                    case 'zip': return '🗜️';
+                    case 'png':
+                    case 'jpg':
+                    case 'jpeg':
+                    case 'gif': return '🖼️';
+                    default: return '📎';
+                }
+            }
+
+            formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            async sendMessage() {
+                const message = this.messageInput.value.trim();
+                if (!message || this.isTyping || this.isUploading) return;
+
+                if (this.selectedFile) {
+                    // Si hay una imagen seleccionada, envía el archivo y el mensaje juntos
+                    this.addMessage(message, 'user');
+                    await this.sendCombinedMessage(message, this.selectedFile);
+                    this.selectedFile = null; // Limpia la variable después del envío
+                } else {
+                    // Comportamiento habitual si no hay archivo
+                    this.addMessage(message, 'user');
+                    
+                    // Clear input
+                    this.messageInput.value = '';
+                    this.messageInput.style.height = 'auto';
+                    
+                    // Show typing indicator
+                    this.showTyping();
+                    
+                    try {
+                        // Send message to backend
+                        const response = await fetch('/api/chat', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                message: message,
+                                sessionId: this.sessionId
+                            })
+                        });
+
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                        }
+
+                        const data = await response.json();
+                        
+                        // Hide typing indicator
+                        this.hideTyping();
+                        
+                        // Add bot response with markdown parsing
+                        this.addMessage(data.message, 'bot');
+                        
+                    } catch (error) {
+                        console.error('Error sending message:', error);
+                        this.hideTyping();
+                        this.addMessage(`Error: ${error.message}`, 'bot');
+                    }
+                }
+            }
+
+            async sendCombinedMessage(message, file) {
+                this.showTyping();
+                try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('message', message);
+                    formData.append('sessionId', this.sessionId);
+
+                    const response = await fetch('/api/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    this.hideTyping();
+                    this.addMessage(data.message, 'bot');
+
+                } catch (error) {
+                    console.error('Error sending combined message:', error);
+                    this.hideTyping();
+                    this.addMessage(`Error al enviar el archivo y mensaje: ${error.message}`, 'bot');
+                }
+            }
+
+            addMessage(text, sender) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}`;
+                
+                const bubbleDiv = document.createElement('div');
+                bubbleDiv.className = 'message-bubble';
+                
+                // Para mensajes del bot, procesar markdown
+                if (sender === 'bot') {
+                    bubbleDiv.innerHTML = this.markdownParser.parse(text);
+                } else {
+                    bubbleDiv.textContent = text;
+                }
+                
+                const timestamp = document.createElement('div');
+                timestamp.className = 'timestamp';
+                timestamp.textContent = new Date().toLocaleTimeString('es-ES', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+                
+                messageDiv.appendChild(bubbleDiv);
+                messageDiv.appendChild(timestamp);
+                this.messagesContainer.appendChild(messageDiv);
+                
+                // Scroll to bottom
+                this.scrollToBottom();
+            }
+
+            showTyping() {
+                this.isTyping = true;
+                this.sendButton.disabled = true;
+                this.typingIndicator.style.display = 'block';
+                this.scrollToBottom();
+            }
+
+            hideTyping() {
+                this.isTyping = false;
+                this.sendButton.disabled = false;
+                this.typingIndicator.style.display = 'none';
+            }
+
+            scrollToBottom() {
+                setTimeout(() => {
+                    this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+                }, 100);
+            }
+        }
+
+        // Initialize chatbot when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new Chatbot();
+        });
+    </script>
+</body>
+</html>
